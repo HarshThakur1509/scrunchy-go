@@ -19,7 +19,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		http.Error(w, "Failed to Read body", http.StatusBadRequest)
+		http.Error(w, "Failed to Read Body", http.StatusBadRequest)
 		return
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
@@ -30,10 +30,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	}
 	user := models.User{Email: body.Email, Password: string(hash)}
-	if initializers.DB.First(&user) != nil {
-		Login(w, r)
-		return
-	}
+	// if initializers.DB.First(&user) != nil {
+	// 	Login(w, r)
+	// 	return
+	// }
 	result := initializers.DB.Create(&user)
 	if result.Error != nil {
 		http.Error(w, "Failed to Create User", http.StatusBadRequest)
@@ -131,7 +131,32 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.Preload("Cart").First(&user, user.ID)
 	// Respond with the user information as JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"User": user,
-	})
+	b, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, "Failed to marshal user", http.StatusInternalServerError)
+		return
+	}
+	// json.NewEncoder(w).Encode(map[string]interface{}{
+	// 	"User": user,
+	// })
+	w.Write(b)
+}
+
+func MakeAdmin(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		UserID uint
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, "Failed to Read Body", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	initializers.DB.First(&user, body.UserID)
+	user.Admin = true
+	initializers.DB.Save(&user)
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -25,10 +25,12 @@ func (s *ApiServer) Run() error {
 	router.HandleFunc("POST /users/signup", controllers.SignUp)
 	router.HandleFunc("POST /users/login", controllers.Login)
 
+	router.HandleFunc("POST /admin/products", middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct)))
+	router.HandleFunc("POST /admin/create", middleware.RequireAdmin(http.HandlerFunc(controllers.MakeAdmin)))
+
 	authRouter := http.NewServeMux()
 	router.HandleFunc("GET /users/logout", controllers.Logout)
 	authRouter.HandleFunc("GET /users/validate", controllers.Validate)
-	authRouter.HandleFunc("POST /products", controllers.PostProduct)
 	authRouter.HandleFunc("POST /products/cart", controllers.AddToCart)
 
 	router.Handle("/", middleware.RequireAuth(authRouter))
