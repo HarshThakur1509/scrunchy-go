@@ -95,6 +95,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    tokenString,
+		Path:     "/",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
@@ -113,6 +114,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    "",
+		Path:     "/",
 		Expires:  time.Now().Add(-time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
@@ -120,7 +122,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Logged out"})
 }
 
 func Validate(w http.ResponseWriter, r *http.Request) {
@@ -138,23 +142,13 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to marshal user", http.StatusInternalServerError)
 		return
 	}
-	// json.NewEncoder(w).Encode(map[string]interface{}{
-	// 	"User": user,
-	// })
 	w.Write(b)
 }
 
 func IsAdmin(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
-		return
-	}
-	initializers.DB.Preload("Cart").First(&user, user.ID)
 
 	w.Header().Set("Content-Type", "application/json")
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"Admin": true,
 	})
@@ -178,4 +172,13 @@ func MakeAdmin(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.Save(&user)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func ListUsers(w http.ResponseWriter, r *http.Request) {
+	var users []models.User
+	initializers.DB.Find(&users)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(users)
 }
