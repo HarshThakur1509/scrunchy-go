@@ -13,6 +13,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const SECRET = "l41^*&vjah4#%4565c4vty%#8b84"
+
 type wrappedWrite struct {
 	http.ResponseWriter
 	statusCode int
@@ -55,7 +57,7 @@ func RecoveryMiddleware(next http.Handler) http.HandlerFunc {
 func RequireAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the Authorization cookie
-		cookie, err := r.Cookie("Authorization")
+		cookie, err := r.Cookie("jwt")
 		if err != nil {
 			http.Error(w, "Unauthorized - missing token", http.StatusUnauthorized)
 			return
@@ -67,7 +69,7 @@ func RequireAuth(next http.Handler) http.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("l41^*&vjah4#%4565c4vty%#8b84"), nil
+			return []byte(SECRET), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -109,7 +111,7 @@ func RequireAuth(next http.Handler) http.HandlerFunc {
 func RequireAdmin(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the Authorization cookie
-		cookie, err := r.Cookie("Authorization")
+		cookie, err := r.Cookie("jwt")
 		if err != nil {
 			http.Error(w, "Unauthorized - missing token", http.StatusUnauthorized)
 			return
@@ -121,7 +123,7 @@ func RequireAdmin(next http.Handler) http.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("l41^*&vjah4#%4565c4vty%#8b84"), nil
+			return []byte(SECRET), nil
 		})
 
 		if err != nil || !token.Valid {

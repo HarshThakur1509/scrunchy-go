@@ -27,6 +27,7 @@ func (s *ApiServer) Run() error {
 
 	router.HandleFunc("POST /admin/products", middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct)))
 	router.HandleFunc("POST /admin/create", middleware.RequireAdmin(http.HandlerFunc(controllers.MakeAdmin)))
+	router.HandleFunc("GET /admin/isadmin", middleware.RequireAdmin(http.HandlerFunc(controllers.IsAdmin)))
 
 	authRouter := http.NewServeMux()
 	router.HandleFunc("GET /users/logout", controllers.Logout)
@@ -37,9 +38,16 @@ func (s *ApiServer) Run() error {
 
 	stack := middleware.MiddlewareChain(middleware.Logger, middleware.RecoveryMiddleware)
 
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"}, // Specify your React frontend origin
+		AllowCredentials: true,                              // Allow cookies and credentials
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+	}).Handler(stack(router))
+
 	server := http.Server{
 		Addr:    s.addr,
-		Handler: cors.Default().Handler(stack(router)),
+		Handler: corsHandler,
 	}
 	fmt.Println("Server has started", s.addr)
 	return server.ListenAndServe()

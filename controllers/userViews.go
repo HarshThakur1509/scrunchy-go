@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const SECRET = "l41^*&vjah4#%4565c4vty%#8b84"
+
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email    string
@@ -49,7 +51,9 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Signup successful"})
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +85,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte("l41^*&vjah4#%4565c4vty%#8b84"))
+	tokenString, err := token.SignedString([]byte(SECRET))
 
 	if err != nil {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
@@ -89,9 +93,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := &http.Cookie{
-		Name:     "Authorization",
-		Value:    tokenString, // replace this with `tokenString`
-		Path:     "/",
+		Name:     "jwt",
+		Value:    tokenString,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
@@ -103,14 +106,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// Return an empty JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Login successful"})
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{
-		Name:     "Authorization",
+		Name:     "jwt",
 		Value:    "",
-		Path:     "/",
 		Expires:  time.Now().Add(-time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
@@ -140,6 +142,23 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	// 	"User": user,
 	// })
 	w.Write(b)
+}
+
+func IsAdmin(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the user from the context
+	user, ok := r.Context().Value("user").(models.User)
+	if !ok {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+	initializers.DB.Preload("Cart").First(&user, user.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Admin": true,
+	})
+
 }
 
 func MakeAdmin(w http.ResponseWriter, r *http.Request) {
