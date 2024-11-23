@@ -25,15 +25,15 @@ func (s *ApiServer) Run() error {
 	router.HandleFunc("POST /users/signup", controllers.SignUp)
 	router.HandleFunc("POST /users/login", controllers.Login)
 
-	router.HandleFunc("POST /admin/products", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct))))
-	router.HandleFunc("POST /admin/create", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(controllers.MakeAdmin))))
-	router.HandleFunc("GET /admin/listusers", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(controllers.ListUsers))))
-
 	authRouter := http.NewServeMux()
-	authRouter.HandleFunc("GET /admin/isadmin", middleware.RequireAdmin(http.HandlerFunc(controllers.IsAdmin)))
 	authRouter.HandleFunc("GET /users/logout", controllers.Logout)
 	authRouter.HandleFunc("GET /users/validate", controllers.Validate)
 	authRouter.HandleFunc("POST /products/cart", controllers.AddToCart)
+
+	authRouter.HandleFunc("GET /admin/isadmin", middleware.RequireAdmin(http.HandlerFunc(controllers.IsAdmin)))
+	authRouter.HandleFunc("POST /admin/products", middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct)))
+	authRouter.HandleFunc("POST /admin/create", middleware.RequireAdmin(http.HandlerFunc(controllers.MakeAdmin)))
+	authRouter.HandleFunc("GET /admin/listusers", middleware.RequireAdmin(http.HandlerFunc(controllers.ListUsers)))
 
 	router.Handle("/", middleware.RequireAuth(authRouter))
 
