@@ -155,9 +155,10 @@ func IsAdmin(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func MakeAdmin(w http.ResponseWriter, r *http.Request) {
+func AdminStatus(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID uint
+		Status bool
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -168,7 +169,12 @@ func MakeAdmin(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	initializers.DB.First(&user, body.UserID)
-	user.Admin = true
+	if body.Status {
+
+		user.Admin = true
+	} else {
+		user.Admin = false
+	}
 	initializers.DB.Save(&user)
 
 	w.WriteHeader(http.StatusOK)
@@ -176,7 +182,9 @@ func MakeAdmin(w http.ResponseWriter, r *http.Request) {
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
-	initializers.DB.Find(&users)
+
+	// Use Preload to load the associated Cart for each User
+	initializers.DB.Preload("Cart").Find(&users)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

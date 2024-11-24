@@ -10,53 +10,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// func AddToCart(w http.ResponseWriter, r *http.Request) {
-// 	var body struct {
-// 		ProductID uint
-// 	}
+func ListCart(w http.ResponseWriter, r *http.Request) {
+	// Get user from the context
+	user, ok := r.Context().Value("user").(models.User)
+	if !ok {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
 
-// 	user, ok := r.Context().Value("user").(models.User)
-// 	if !ok {
-// 		http.Error(w, "User not found", http.StatusUnauthorized)
-// 		return
-// 	}
-// 	var cart models.Cart
-// 	initializers.DB.Model(models.Cart{UserID: user.ID}).First(&cart)
+	// Ensure the cart exists
+	var cart models.Cart
+	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: user.ID})
 
-// 	json.NewDecoder(r.Body).Decode(&body)
+	// Fetch and return the cart items
+	var cartItems []models.CartItem
+	initializers.DB.Preload("Product").Find(&cartItems, "cart_id =?", cart.ID)
 
-// 	cartItem := models.CartItem{
-// 		Quantity:  1,
-// 		ProductID: body.ProductID,
-// 		CartID:    cart.ID,
-// 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(cartItems)
 
-// 	if len(cart.CartItems) > 0 {
-// 		var newItems []models.CartItem
-// 		initializers.DB.Model(&cart).Association("CartItems").Find(&newItems)
-// 		for i := 0; i < len(newItems); i++ {
-// 			if newItems[i].ProductID == body.ProductID {
-// 				newItems[i].Quantity += 1
-// 				break
-// 			}
-// 		}
-// 		initializers.DB.Model(&cart).Association("CartItems").Clear()
-// 		initializers.DB.Model(&cart).Association("CartItems").Append(&newItems)
-
-// 		w.Header().Set("Content-Type", "application/json")
-// 		w.WriteHeader(http.StatusCreated)
-// 		json.NewEncoder(w).Encode(cart)
-
-// 	} else {
-// 		initializers.DB.Create(&cartItem)
-// 		initializers.DB.Model(&cart).Association("CartItems").Append(cartItem)
-
-// 		w.Header().Set("Content-Type", "application/json")
-// 		w.WriteHeader(http.StatusCreated)
-// 		json.NewEncoder(w).Encode(cart)
-// 	}
-
-// }
+}
 
 func AddToCart(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -105,6 +79,74 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Reload the cart with updated items and preload CartItems and Product
+	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
+
+	// Respond with the updated cart
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(cart)
+}
+
+func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ProductID uint
+	}
+
+	// Get user from the context
+	user, ok := r.Context().Value("user").(models.User)
+	if !ok {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+
+	var cart models.Cart
+	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
+
+	// Decode the request body
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var cartItem models.CartItem
+	initializers.DB.Delete(&cartItem, "product_id = ? AND cart_id = ?", body.ProductID, cart.ID)
+
+	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
+
+	// Respond with the updated cart
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(cart)
+
+}
+
+func QuantityCart(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ProductID uint
+		Quantity  uint
+	}
+	// Get user from the context
+	user, ok := r.Context().Value("user").(models.User)
+	if !ok {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+
+	var cart models.Cart
+	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
+
+	// Decode the request body
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var cartItem models.CartItem
+	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", body.ProductID, cart.ID)
+
+	cartItem.Quantity = body.Quantity
+	initializers.DB.Save(&cartItem)
+
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
 
 	// Respond with the updated cart
