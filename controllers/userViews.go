@@ -156,9 +156,10 @@ func IsAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminStatus(w http.ResponseWriter, r *http.Request) {
+	userid := r.PathValue("id")
+
 	var body struct {
-		UserID uint
-		Status bool
+		Admin bool
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -168,8 +169,8 @@ func AdminStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	initializers.DB.First(&user, body.UserID)
-	if body.Status {
+	initializers.DB.First(&user, userid)
+	if body.Admin {
 
 		user.Admin = true
 	} else {
@@ -189,4 +190,16 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	var user models.User
+	initializers.DB.First(&user, id)
+
+	initializers.DB.Delete(&user)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{"message": "User deleted"})
 }

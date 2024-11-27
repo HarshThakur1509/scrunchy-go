@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -33,10 +34,9 @@ func ListCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddToCart(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		ProductID uint
-	}
 
+	productidStr := r.PathValue("id")
+	productid, _ := strconv.ParseUint(productidStr, 10, 64)
 	// Get user from the context
 	user, ok := r.Context().Value("user").(models.User)
 	if !ok {
@@ -48,22 +48,16 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	var cart models.Cart
 	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: user.ID})
 
-	// Decode the request body
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
 	// Check if the product already exists in the cart
 	var cartItem models.CartItem
-	err := initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, body.ProductID).First(&cartItem).Error
+	err := initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).First(&cartItem).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Product not in cart, create a new cart item
 			cartItem = models.CartItem{
 				Quantity:  1,
-				ProductID: body.ProductID,
+				ProductID: uint(productid),
 				CartID:    cart.ID,
 			}
 			initializers.DB.Create(&cartItem)
@@ -88,9 +82,8 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		ProductID uint
-	}
+	productidStr := r.PathValue("id")
+	productid, _ := strconv.ParseUint(productidStr, 10, 64)
 
 	// Get user from the context
 	user, ok := r.Context().Value("user").(models.User)
@@ -102,14 +95,8 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	var cart models.Cart
 	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
 
-	// Decode the request body
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
 	var cartItem models.CartItem
-	initializers.DB.Delete(&cartItem, "product_id = ? AND cart_id = ?", body.ProductID, cart.ID)
+	initializers.DB.Delete(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
 
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
 
@@ -122,9 +109,10 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 
 func QuantityCart(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ProductID uint
-		Quantity  uint
+		Quantity uint
 	}
+	productidStr := r.PathValue("id")
+	productid, _ := strconv.ParseUint(productidStr, 10, 64)
 	// Get user from the context
 	user, ok := r.Context().Value("user").(models.User)
 	if !ok {
@@ -142,10 +130,15 @@ func QuantityCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var cartItem models.CartItem
-	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", body.ProductID, cart.ID)
+	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
 
-	cartItem.Quantity = body.Quantity
-	initializers.DB.Save(&cartItem)
+	if body.Quantity == 0 {
+		initializers.DB.Delete(&cartItem)
+	} else {
+
+		cartItem.Quantity = body.Quantity
+		initializers.DB.Save(&cartItem)
+	}
 
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
 

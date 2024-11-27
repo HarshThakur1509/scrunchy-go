@@ -29,15 +29,16 @@ func (s *ApiServer) Run() error {
 	authRouter.HandleFunc("GET /users/logout", controllers.Logout)
 	authRouter.HandleFunc("GET /users/validate", controllers.Validate)
 
-	authRouter.HandleFunc("GET /products/cart/", controllers.ListCart)
-	authRouter.HandleFunc("POST /products/cart/add", controllers.AddToCart)
-	authRouter.HandleFunc("POST /products/cart/remove", controllers.RemoveFromCart)
-	authRouter.HandleFunc("POST /products/cart/quantity", controllers.QuantityCart)
+	authRouter.HandleFunc("GET /cart", controllers.ListCart)
+	authRouter.HandleFunc("POST /cart/add/{id}", controllers.AddToCart)
+	authRouter.HandleFunc("DELETE /cart/remove/{id}", controllers.RemoveFromCart)
+	authRouter.HandleFunc("POST /cart/quantity/{id}", controllers.QuantityCart)
 
 	authRouter.HandleFunc("GET /admin/isadmin", middleware.RequireAdmin(http.HandlerFunc(controllers.IsAdmin)))
 	authRouter.HandleFunc("POST /admin/products", middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct)))
-	authRouter.HandleFunc("POST /admin/status", middleware.RequireAdmin(http.HandlerFunc(controllers.AdminStatus)))
+	authRouter.HandleFunc("POST /admin/status/{id}", middleware.RequireAdmin(http.HandlerFunc(controllers.AdminStatus)))
 	authRouter.HandleFunc("GET /admin/listusers", middleware.RequireAdmin(http.HandlerFunc(controllers.ListUsers)))
+	authRouter.HandleFunc("DELETE /admin/delete/{id}", middleware.RequireAdmin(http.HandlerFunc(controllers.DeleteUser)))
 
 	router.Handle("/", middleware.RequireAuth(authRouter))
 
