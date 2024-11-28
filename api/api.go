@@ -20,6 +20,7 @@ func NewApiServer(addr string) *ApiServer {
 func (s *ApiServer) Run() error {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /products", controllers.GetProducts)
+	router.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 	router.HandleFunc("GET /products/{id}", controllers.GetProductIndex)
 
 	router.HandleFunc("POST /users/signup", controllers.SignUp)

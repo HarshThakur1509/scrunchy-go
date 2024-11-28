@@ -6,6 +6,7 @@ type Product struct {
 	gorm.Model
 	Name  string
 	Price int
+	Image string
 }
 
 type CartItem struct {
