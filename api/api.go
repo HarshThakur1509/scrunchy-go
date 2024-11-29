@@ -25,9 +25,12 @@ func (s *ApiServer) Run() error {
 
 	router.HandleFunc("POST /users/signup", controllers.SignUp)
 	router.HandleFunc("POST /users/login", controllers.Login)
+	router.HandleFunc("GET /users/logout", controllers.Logout)
+
+	router.HandleFunc("POST /users/forgot", controllers.ForgotPasswordHandler)
+	router.HandleFunc("POST /users/reset", controllers.ResetPasswordHandler)
 
 	authRouter := http.NewServeMux()
-	authRouter.HandleFunc("GET /users/logout", controllers.Logout)
 	authRouter.HandleFunc("GET /users/validate", controllers.Validate)
 
 	authRouter.HandleFunc("GET /cart", controllers.ListCart)
