@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Product struct {
 	gorm.Model
 	Name  string
-	Price int
+	Price uint
 	Image string
 }
 
@@ -20,5 +20,6 @@ type CartItem struct {
 type Cart struct {
 	gorm.Model
 	UserID    uint
+	Total     uint
 	CartItems []CartItem
 }

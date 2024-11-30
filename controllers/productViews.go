@@ -23,7 +23,7 @@ func PostProduct(w http.ResponseWriter, r *http.Request) {
 	// Extract form fields
 	name := r.FormValue("name")
 	priceStr := r.FormValue("price")
-	price, err := strconv.ParseInt(priceStr, 10, 64)
+	price, err := strconv.ParseUint(priceStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid price", http.StatusBadRequest)
 		return
@@ -52,7 +52,7 @@ func PostProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save to database
-	product := models.Product{Name: name, Price: int(price), Image: imagePath}
+	product := models.Product{Name: name, Price: uint(price), Image: imagePath}
 	result := initializers.DB.Create(&product)
 	if result.Error != nil {
 		http.Error(w, "Unable to save data", http.StatusInternalServerError)

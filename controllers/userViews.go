@@ -18,6 +18,8 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email    string
 		Password string
+		Name     string
+		Phone    string
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -32,7 +34,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	user := models.User{Email: body.Email, Password: string(hash)}
+	user := models.User{Email: body.Email, Password: string(hash), Name: body.Name, Phone: body.Phone}
 
 	result := initializers.DB.Create(&user)
 	if result.Error != nil {

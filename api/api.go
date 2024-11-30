@@ -38,6 +38,9 @@ func (s *ApiServer) Run() error {
 	authRouter.HandleFunc("DELETE /cart/remove/{id}", controllers.RemoveFromCart)
 	authRouter.HandleFunc("POST /cart/quantity/{id}", controllers.QuantityCart)
 
+	authRouter.HandleFunc("GET /pay", controllers.Pay)
+	authRouter.HandleFunc("POST /payresponse", controllers.PayResponse)
+
 	authRouter.HandleFunc("GET /admin/isadmin", middleware.RequireAdmin(http.HandlerFunc(controllers.IsAdmin)))
 	authRouter.HandleFunc("POST /admin/products", middleware.RequireAdmin(http.HandlerFunc(controllers.PostProduct)))
 	authRouter.HandleFunc("POST /admin/status/{id}", middleware.RequireAdmin(http.HandlerFunc(controllers.AdminStatus)))

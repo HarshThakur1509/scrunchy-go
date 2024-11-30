@@ -24,12 +24,13 @@ func ListCart(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: user.ID})
 
 	// Fetch and return the cart items
-	var cartItems []models.CartItem
-	initializers.DB.Preload("Product").Find(&cartItems, "cart_id =?", cart.ID)
+	// var cartItems []models.CartItem
+	initializers.DB.Preload("CartItems.Product").Find(&cart, cart.ID)
+	// initializers.DB.Preload("CartItems.Product").Find(&cartItems, "cart_id =?", cart.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(cartItems)
+	json.NewEncoder(w).Encode(cart)
 
 }
 
@@ -61,6 +62,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 				CartID:    cart.ID,
 			}
 			initializers.DB.Create(&cartItem)
+
 		} else {
 			// Handle other errors
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -70,9 +72,14 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 		// Product already in cart, update quantity
 		cartItem.Quantity++
 		initializers.DB.Save(&cartItem)
+
 	}
 
 	// Reload the cart with updated items and preload CartItems and Product
+	initializers.DB.Preload("Product").First(&cartItem, "cart_id = ?", cart.ID)
+	cart.Total += cartItem.Product.Price
+	initializers.DB.Save(&cart)
+
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
 
 	// Respond with the updated cart
@@ -96,7 +103,12 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
 
 	var cartItem models.CartItem
-	initializers.DB.Delete(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
+	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
+
+	initializers.DB.Preload("Product").First(&cartItem, "cart_id = ?", cart.ID)
+	cart.Total -= cartItem.Product.Price * cartItem.Quantity
+	initializers.DB.Delete(&cartItem)
+	initializers.DB.Save(&cart)
 
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
 
@@ -132,12 +144,18 @@ func QuantityCart(w http.ResponseWriter, r *http.Request) {
 	var cartItem models.CartItem
 	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
 
-	if body.Quantity == 0 {
-		initializers.DB.Delete(&cartItem)
-	} else {
+	initializers.DB.Preload("Product").First(&cartItem, "cart_id = ?", cart.ID)
 
+	if body.Quantity == 0 {
+		cart.Total -= cartItem.Product.Price * cartItem.Quantity
+		initializers.DB.Delete(&cartItem)
+		initializers.DB.Save(&cart)
+	} else {
+		cart.Total += cartItem.Product.Price * (body.Quantity - cartItem.Quantity)
 		cartItem.Quantity = body.Quantity
 		initializers.DB.Save(&cartItem)
+		initializers.DB.Save(&cart)
+
 	}
 
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
