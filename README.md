@@ -1,1 +1,1 @@
-wgo go run main.go
+wgo run main.go
