@@ -1,9 +1,10 @@
 package main
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"os"
+
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 )
 
 func init() {

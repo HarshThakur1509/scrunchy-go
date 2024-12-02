@@ -1,8 +1,8 @@
 package main
 
 import (
-	"Scrunchy/api"
-	"Scrunchy/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/api"
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
 )
 
 func init() {

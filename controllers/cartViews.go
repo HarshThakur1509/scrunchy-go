@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 	"gorm.io/gorm"
 )
 

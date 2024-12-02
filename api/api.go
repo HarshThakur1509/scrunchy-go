@@ -1,11 +1,11 @@
 package api
 
 import (
-	"Scrunchy/controllers"
-	"Scrunchy/middleware"
 	"fmt"
 	"net/http"
 
+	"github.com/HarshThakur1509/scrunchy-go/controllers"
+	"github.com/HarshThakur1509/scrunchy-go/middleware"
 	"github.com/rs/cors"
 )
 

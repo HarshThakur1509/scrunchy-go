@@ -1,14 +1,15 @@
 package controllers
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 )
 
 func PostProduct(w http.ResponseWriter, r *http.Request) {

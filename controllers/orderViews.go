@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"encoding/json"
 	"net/http"
 
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 	"github.com/razorpay/razorpay-go"
 )
 

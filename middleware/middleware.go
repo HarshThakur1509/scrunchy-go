@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"context"
 	"fmt"
 	"log"
@@ -10,6 +8,8 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 	"github.com/golang-jwt/jwt/v5"
 )
 

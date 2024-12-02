@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"Scrunchy/initializers"
-	"Scrunchy/models"
 	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/HarshThakur1509/scrunchy-go/initializers"
+	"github.com/HarshThakur1509/scrunchy-go/models"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
