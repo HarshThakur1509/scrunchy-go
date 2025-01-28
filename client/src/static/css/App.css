@@ -1,0 +1,213 @@
+button {
+    background-color: var(--pink) !important;
+    color: white !important;
+    padding: 0.5rem;
+    border: 0px !important;
+    font-weight: bolder !important;
+    transition: all 0.5s;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: white !important;
+    color: var(--dblue) !important;
+    box-shadow: 0 -3px var(--pink);
+}
+
+
+
+
+hr {
+    background-color: var(--pink);
+}
+
+
+/* Scrollbar */
+
+
+::-webkit-scrollbar {
+    height: 12px;
+    width: 16px;
+    background: transparent;
+    z-index: 12;
+    overflow: visible;
+}
+
+::-webkit-scrollbar-track {
+    background: white;
+}
+
+::-webkit-scrollbar-thumb {
+    width: 10px;
+    background-color: var(--pink);
+    border-radius: 10px;
+    z-index: 12;
+    border: 4px solid rgba(0, 0, 0, 0);
+    background-clip: padding-box;
+    transition: background-color 0.32s ease-in-out;
+    margin: 4px;
+    min-height: 32px;
+    min-width: 32px;
+}
+
+::-webkit-scrollbar-corner {
+    background: #202020;
+}
+
+::selection {
+    background: #54a5d4;
+    text-shadow: 1px 1px 2px #000000aa;
+    color: #fff;
+}
+
+
+/* Login */
+
+
+.login-back {
+    background-color: var(--pink);
+    height: 300px
+}
+
+
+
+
+
+/* Home */
+
+header {
+    margin-bottom: 3rem;
+}
+
+nav {
+    border-bottom: 4px solid var(--pink);
+    height: 7rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#logo img {
+
+    width: 200px;
+    height: 200px;
+    border-radius: 100%;
+    background-color: white;
+}
+
+.nav-info {
+    position: absolute;
+    top: 3rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+@media only screen and (max-width: 320px) {
+    .nav-info {
+        top: 6rem;
+        right: 0rem;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+}
+
+.pro-name {
+    color: var(--dblue);
+}
+
+.pro-price {
+    color: var(--pink);
+}
+
+.product-section .row {
+    display: flex;
+    gap: 5rem;
+    justify-content: center;
+    margin: 2rem;
+    flex-wrap: wrap;
+}
+
+.card img {
+    width: 30rem;
+}
+
+/* Existing CSS rules */
+
+/* Cart */
+
+.Cart {
+    padding: 60px 0;
+}
+
+.cart-items {
+    margin-bottom: 30px;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.item-details img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    margin-right: 20px;
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.quantity {
+    display: flex;
+    align-items: center;
+}
+
+.quantity-btn {
+    background-color: var(--pink) !important;
+    color: var(--dblue) !important;
+    border: 0px !important;
+    font-weight: bolder !important;
+    cursor: pointer;
+}
+
+.quantity-input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 0 5px;
+}
+
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cart-total h4 {
+    margin-bottom: 0;
+}
+
+@media only screen and (max-width: 576px) {
+    .cart-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .item-details img {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
