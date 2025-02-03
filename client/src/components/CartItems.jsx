@@ -10,7 +10,7 @@ export const CartItems = ({ cartItems }) => {
   const increaseQuantity = useMutation({
     mutationFn: async ({ id, quantity }) => {
       return await axios.post(
-        `http://localhost:3000/cart/quantity/${id}`,
+        `https://scrunchy.harshthakur.site/api/cart/quantity/${id}`,
         { quantity },
         { withCredentials: true }
       );
@@ -41,7 +41,7 @@ export const CartItems = ({ cartItems }) => {
             <div className="item-details">
               <img
                 className="card-img-top"
-                src={`http://localhost:3000/${cartItem.Product.Image}`}
+                src={`https://scrunchy.harshthakur.site/api/${cartItem.Product.Image}`}
                 alt={cartItem.Product.Name}
               />
               <div className="item-info">

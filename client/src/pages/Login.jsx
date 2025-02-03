@@ -9,7 +9,7 @@ export const Login = () => {
   const { cookieExists } = useCheckCookie();
 
   const handleOauth = () => {
-    window.location.href = `http://localhost:3000/auth?provider=google`;
+    window.location.href = `https://scrunchy.harshthakur.site/api/auth?provider=google`;
   };
 
   const onSubmit = async (formdata) => {
@@ -18,7 +18,7 @@ export const Login = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/users/login",
+        "https://scrunchy.harshthakur.site/api/users/login",
         { email, password },
         { withCredentials: true }
       );

@@ -12,9 +12,12 @@ export const Cart = () => {
   } = useQuery({
     queryKey: ["cart"],
     queryFn: async () => {
-      const response = await axios.get("http://localhost:3000/cart", {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        "https://scrunchy.harshthakur.site/api/cart",
+        {
+          withCredentials: true,
+        }
+      );
 
       return response.data;
     },

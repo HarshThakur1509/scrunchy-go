@@ -1,37 +1,37 @@
 services:
   client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: 982534376867.dkr.ecr.ap-south-1.amazonaws.com/scrunchy-client:latest
     ports:
-      - "5173:5173"
+      - "5174:5173"
     environment:
-      - NODE_ENV=${ENV}
+      - NODE_ENV=production
+    networks:
+      - app-network
     depends_on:
       - server
     restart: unless-stopped
 
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: 982534376867.dkr.ecr.ap-south-1.amazonaws.com/scrunchy-server:latest
     environment:
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - SECRET=${SECRET}
-      - PAY_ID=${PAY_ID}
-      - PAY_SECRET=${PAY_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
-      - REDIRECT_SECURE=${REDIRECT_SECURE}
-      - SESSION_COOKIE_DOMAIN=${SESSION_COOKIE_DOMAIN}
-      - ENV=${ENV}
+      - DB_USER=postgres
+      - DB_PASSWORD=harsh1592
+      - DB_NAME=scrunchy
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - SECRET=
+      - PAY_ID=
+      - PAY_SECRET=
+      - GOOGLE_CLIENT_ID=
+      - GOOGLE_CLIENT_SECRET=
+      - GOOGLE_CALLBACK_URL=https://scrunchy.harshthakur.site/api/auth/callback?provider=google
+      - REDIRECT_SECURE=https://scrunchy.harshthakur.site
+      - SESSION_COOKIE_DOMAIN=scrunchy.harshthakur.site
+      - ENV=production
+    networks:
+      - app-network
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - uploads-data:/app/uploads
     depends_on:
@@ -42,11 +42,11 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: harsh1592
+      POSTGRES_DB: scrunchy
+    networks:
+      - app-network
     volumes:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -62,3 +62,7 @@ volumes:
     driver: local
   uploads-data:
     driver: local
+
+networks:
+  app-network:
+    driver: bridge

@@ -18,7 +18,7 @@ export const Nav = () => {
     if (isLoggingOut) return;
     try {
       setIsLoggingOut(true);
-      await axios.get("http://localhost:3000/auth/logout", {
+      await axios.get("https://scrunchy.harshthakur.site/api/auth/logout", {
         withCredentials: true,
         timeout: 5000, // Ensure request doesn't hang
       });
@@ -37,7 +37,7 @@ export const Nav = () => {
   const fetchAdminStatus = async () => {
     if (cookieExists) {
       try {
-        await axios.get("http://localhost:3000/admin/isadmin", {
+        await axios.get("https://scrunchy.harshthakur.site/api/admin/isadmin", {
           withCredentials: true,
         });
         setAdmin(true);
@@ -52,9 +52,12 @@ export const Nav = () => {
   const fetchUserDetails = async () => {
     if (cookieExists) {
       try {
-        const res = await axios.get("http://localhost:3000/users/validate", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          "https://scrunchy.harshthakur.site/api/users/validate",
+          {
+            withCredentials: true,
+          }
+        );
 
         setUserDetails(res.data);
       } catch (err) {

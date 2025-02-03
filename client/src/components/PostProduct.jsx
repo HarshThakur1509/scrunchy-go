@@ -27,7 +27,7 @@ export const PostProduct = () => {
 
       try {
         const response = await axios.post(
-          "http://localhost:3000/admin/products",
+          "https://scrunchy.harshthakur.site/api/admin/products",
           formData,
           { withCredentials: true },
           {

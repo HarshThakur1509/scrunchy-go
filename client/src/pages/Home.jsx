@@ -6,7 +6,7 @@ import axios from "axios";
 export const Home = () => {
   // Fetch products
   const fetchProducts = () => {
-    return fetch("http://localhost:3000/products", {
+    return fetch("https://scrunchy.harshthakur.site/api/products", {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     }).then((res) => res.json());
@@ -20,9 +20,13 @@ export const Home = () => {
   // Mutation for adding to cart
   const addToCartMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.post(`http://localhost:3000/cart/add/${id}`, null, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `https://scrunchy.harshthakur.site/api/cart/add/${id}`,
+        null,
+        {
+          withCredentials: true,
+        }
+      );
     },
   });
 
@@ -46,7 +50,7 @@ export const Home = () => {
             <div className="card" key={product.ID}>
               <img
                 className="card-img-top"
-                src={`http://localhost:3000/${product.Image}`}
+                src={`https://scrunchy.harshthakur.site/api/${product.Image}`}
                 alt={product.Name}
               />
               <div className="card-body">

@@ -7,10 +7,13 @@ const useCheckCookie = () => {
 
   const checkCookie = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/cookie", {
-        withCredentials: true,
-        timeout: 3000,
-      });
+      const response = await axios.get(
+        "https://scrunchy.harshthakur.site/api/cookie",
+        {
+          withCredentials: true,
+          timeout: 3000,
+        }
+      );
       setCookieExists(response.data.exists);
     } catch (error) {
       console.log(error);

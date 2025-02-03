@@ -47,7 +47,7 @@ func GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect to the secure area
 	redirectSecure := os.Getenv("REDIRECT_SECURE")
 	if redirectSecure == "" {
-		redirectSecure = "http://localhost:5173/"
+		redirectSecure = "https://scrunchy.harshthakur.site/"
 	}
 
 	http.Redirect(w, r, redirectSecure, http.StatusFound)

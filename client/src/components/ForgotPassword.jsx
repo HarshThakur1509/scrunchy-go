@@ -8,11 +8,13 @@ export const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3000/users/forgot", {
-        email,
-      });
+      const response = await axios.post(
+        "https://scrunchy.harshthakur.site/api/users/forgot",
+        {
+          email,
+        }
+      );
       setMessage(response.data);
-      
     } catch (error) {
       setMessage("Error: " + error.response.data);
     }

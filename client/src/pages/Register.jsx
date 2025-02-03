@@ -15,12 +15,12 @@ export const Register = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/users/signup",
+        "https://scrunchy.harshthakur.site/api/users/signup",
         { email, password, name, phone },
         { withCredentials: true }
       );
       await axios.post(
-        "http://localhost:3000/users/login",
+        "https://scrunchy.harshthakur.site/api/users/login",
         { email, password },
         { withCredentials: true }
       );

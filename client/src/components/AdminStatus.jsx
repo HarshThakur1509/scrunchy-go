@@ -9,9 +9,12 @@ export const AdminStatus = () => {
 
   // Fetch users list
   const users = async () => {
-    const response = await axios.get("http://localhost:3000/admin/listusers", {
-      withCredentials: true,
-    });
+    const response = await axios.get(
+      "https://scrunchy.harshthakur.site/api/admin/listusers",
+      {
+        withCredentials: true,
+      }
+    );
     return response.data;
   };
 
@@ -60,7 +63,7 @@ export const AdminStatus = () => {
   const handleSetButtonClick = async (id, isAdmin) => {
     try {
       await axios.post(
-        `http://localhost:3000/admin/status/${id}`,
+        `https://scrunchy.harshthakur.site/api/admin/status/${id}`,
         { admin: isAdmin }, // Include the updated admin status
         { withCredentials: true }
       );
@@ -71,9 +74,12 @@ export const AdminStatus = () => {
 
   const handleDeleteUser = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/admin/delete/${id}`, {
-        withCredentials: true,
-      });
+      await axios.delete(
+        `https://scrunchy.harshthakur.site/api/admin/delete/${id}`,
+        {
+          withCredentials: true,
+        }
+      );
 
       // Update the state to remove the deleted user
       setList((prevList) => prevList.filter((user) => user.ID !== id));

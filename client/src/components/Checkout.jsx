@@ -10,13 +10,16 @@ export const Checkout = () => {
   const handlePayment = async () => {
     // Fetch order details from the server
     try {
-      const response = await fetch("http://localhost:3000/pay", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://scrunchy.harshthakur.site/api/pay",
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch payment details");
@@ -43,7 +46,7 @@ export const Checkout = () => {
 
           try {
             const paymentResponse = await fetch(
-              "http://localhost:3000/payresponse",
+              "https://scrunchy.harshthakur.site/api/payresponse",
               {
                 method: "POST",
                 credentials: "include",

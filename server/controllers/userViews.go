@@ -150,8 +150,8 @@ func ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.Save(&user)
 
 	// Simulate email by printing the reset link
-	// fmt.Printf("Reset link: http://localhost:3000/reset-password?token=%s\n", token)
-	link := "http://localhost:5173/reset-password?token=" + token
+	// fmt.Printf("Reset link: https://scrunchy.harshthakur.site/api/reset-password?token=%s\n", token)
+	link := "https://scrunchy.harshthakur.site/reset-password?token=" + token
 	SendEmail(user.Email, link)
 
 	w.WriteHeader(http.StatusOK)

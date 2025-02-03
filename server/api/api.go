@@ -60,8 +60,8 @@ func (s *ApiServer) Run() error {
 	stack := middleware.MiddlewareChain(middleware.Logger, middleware.RecoveryMiddleware)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"}, // Specify your React frontend origin
-		AllowCredentials: true,                              // Allow cookies and credentials
+		AllowedOrigins:   []string{"https://scrunchy.harshthakur.site"}, // Specify your React frontend origin
+		AllowCredentials: true,                                          // Allow cookies and credentials
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 	}).Handler(stack(router))

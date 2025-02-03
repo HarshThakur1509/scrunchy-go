@@ -13,10 +13,13 @@ export const ResetPassword = () => {
     e.preventDefault();
     try {
       // Send the token and new password to the backend
-      const response = await axios.post("http://localhost:3000/users/reset", {
-        token,
-        password,
-      });
+      const response = await axios.post(
+        "https://scrunchy.harshthakur.site/api/users/reset",
+        {
+          token,
+          password,
+        }
+      );
       setMessage(response.data); // Display success message
 
       // Redirect to the login page after 3 seconds

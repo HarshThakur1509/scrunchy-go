@@ -23,7 +23,6 @@ const client = new QueryClient({
 });
 
 function App() {
-  const [auth, setAuth] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [userDetails, setUserDetails] = useState({});
 
@@ -32,8 +31,6 @@ function App() {
       <QueryClientProvider client={client}>
         <LoginContext.Provider
           value={{
-            auth,
-            setAuth,
             admin,
             setAdmin,
             userDetails,
