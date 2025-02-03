@@ -1,14 +1,12 @@
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useContext } from "react";
-import { LoginContext } from "../App";
+import useCheckCookie from "../components/useCheckCookie";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 
 export const Register = () => {
-  const { auth, setAuth } = useContext(LoginContext);
-
+  const { cookieExists } = useCheckCookie();
   const onSubmit = async (formdata) => {
     const name = formdata.name;
     const phone = formdata.phone;
@@ -26,8 +24,7 @@ export const Register = () => {
         { email, password },
         { withCredentials: true }
       );
-      localStorage.setItem("login", "true");
-      setAuth(true);
+      window.location.reload();
     } catch (err) {
       console.log(err);
     }
@@ -48,9 +45,7 @@ export const Register = () => {
     resolver: yupResolver(schema),
   });
 
-  if (auth) {
-    return <Navigate to="/" />;
-  }
+  if (cookieExists) return <Navigate to="/" />;
 
   return (
     <div className="Register">

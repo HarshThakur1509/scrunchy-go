@@ -1,13 +1,16 @@
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useContext } from "react";
-import { LoginContext } from "../App";
+import useCheckCookie from "../components/useCheckCookie";
 import { Navigate, Link } from "react-router-dom";
 import axios from "axios";
 
 export const Login = () => {
-  const { auth, setAuth } = useContext(LoginContext);
+  const { cookieExists } = useCheckCookie();
+
+  const handleOauth = () => {
+    window.location.href = `http://localhost:3000/auth?provider=google`;
+  };
 
   const onSubmit = async (formdata) => {
     const email = formdata.email;
@@ -19,8 +22,7 @@ export const Login = () => {
         { email, password },
         { withCredentials: true }
       );
-      localStorage.setItem("login", "true");
-      setAuth(true);
+      window.location.reload();
     } catch (err) {
       console.log(err);
     }
@@ -39,9 +41,7 @@ export const Login = () => {
     resolver: yupResolver(schema),
   });
 
-  if (auth) {
-    return <Navigate to="/" />;
-  }
+  if (cookieExists) return <Navigate to="/" />;
 
   return (
     <div className="Login">
@@ -59,6 +59,9 @@ export const Login = () => {
           Submit
         </button>
       </form>
+      <button onClick={handleOauth} type="button">
+        Continue with Google
+      </button>
       <Link to="/forgot-password">Forgot Password</Link>
     </div>
   );

@@ -38,6 +38,16 @@ func PostProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// Ensure the uploads directory exists
+	uploadsDir := "uploads"
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		err := os.Mkdir(uploadsDir, os.ModePerm)
+		if err != nil {
+			http.Error(w, "Unable to create uploads directory", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Save the image locally
 	imagePath := filepath.Join("uploads", header.Filename)
 	out, err := os.Create(imagePath)

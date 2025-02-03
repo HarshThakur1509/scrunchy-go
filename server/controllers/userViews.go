@@ -2,38 +2,17 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
-	"os"
+	"strconv"
 	"time"
 
 	"github.com/HarshThakur1509/scrunchy-go/initializers"
 	"github.com/HarshThakur1509/scrunchy-go/models"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-type HealthResponse struct {
-	Status string `json:"status"`
-	DB     string `json:"database"`
-}
-
-func Health(w http.ResponseWriter, r *http.Request) {
-	response := HealthResponse{Status: "UP", DB: "OK"}
-
-	// Ping the database
-	sqlDB, err := initializers.DB.DB()
-	if err != nil || sqlDB.Ping() != nil {
-		response.DB = "DOWN"
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
-
-	// Write the JSON response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -79,8 +58,6 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	SECRET := os.Getenv("SECRET")
-
 	var body struct {
 		Email    string
 		Password string
@@ -104,29 +81,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid email or password", http.StatusBadRequest)
 		return
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
 
-	tokenString, err := token.SignedString([]byte(SECRET))
-
+	// Save user ID in the session
+	var id string = strconv.FormatUint(uint64(user.ID), 10)
+	err = gothic.StoreInSession("user_id", id, r, w)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		http.Error(w, "Failed to save session", http.StatusInternalServerError)
+		log.Println(err)
 		return
 	}
-
-	cookie := &http.Cookie{
-		Name:     "jwt",
-		Value:    tokenString,
-		Path:     "/",
-		Expires:  time.Now().Add(30 * 24 * time.Hour),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	// Set the cookie in the response header
-	http.SetCookie(w, cookie)
 
 	// Return an empty JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -134,31 +97,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Login successful"})
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
-	cookie := &http.Cookie{
-		Name:     "jwt",
-		Value:    "",
-		Path:     "/",
-		Expires:  time.Now().Add(-time.Hour),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	http.SetCookie(w, cookie)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Logged out"})
-}
-
 func Validate(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+	// Retrieve user ID from the session
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 		return
 	}
-	initializers.DB.Preload("Cart").First(&user, user.ID)
+
+	var user models.User
+	initializers.DB.Preload("Cart").Omit("password").First(&user, userID)
 	// Respond with the user information as JSON
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.Marshal(user)

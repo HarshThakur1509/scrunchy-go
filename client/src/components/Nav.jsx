@@ -1,49 +1,41 @@
-import { Link } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import logo from "../static/images/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCartShopping } from "@fortawesome/free-solid-svg-icons";
 import { LoginContext } from "../App";
+import useCheckCookie from "./useCheckCookie";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 export const Nav = () => {
-  const { auth, setAuth, admin, setAdmin } = useContext(LoginContext);
-  const [log, setLog] = useState(null);
+  const { admin, setAdmin } = useContext(LoginContext);
   const { setUserDetails } = useContext(LoginContext);
+  const navigate = useNavigate();
+  const { cookieExists, refreshCookie } = useCheckCookie();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const onLogout = async () => {
+    if (isLoggingOut) return;
     try {
-      await axios.get("http://localhost:3000/users/logout", {
+      setIsLoggingOut(true);
+      await axios.get("http://localhost:3000/auth/logout", {
         withCredentials: true,
+        timeout: 5000, // Ensure request doesn't hang
       });
-      localStorage.setItem("login", "false");
-      setAuth(false);
       setAdmin(false);
+      setUserDetails({});
     } catch (err) {
       console.log(err);
+    } finally {
+      // Always perform client-side cleanup
+      await refreshCookie();
+      navigate("/login");
+      setIsLoggingOut(false);
     }
   };
 
-  const ShowAuth = () => {
-    setAuth(localStorage.getItem("login") === "true" ? true : false);
-    return auth ? (
-      <button className="btn1" onClick={onLogout}>
-        Logout
-      </button>
-    ) : (
-      <div className="my-auto [&>*]:p-2">
-        <Link to="/login">
-          <span>login</span>
-        </Link>
-        <Link to="/register">
-          <span>Register</span>
-        </Link>
-      </div>
-    );
-  };
-
   const fetchAdminStatus = async () => {
-    if (auth) {
+    if (cookieExists) {
       try {
         await axios.get("http://localhost:3000/admin/isadmin", {
           withCredentials: true,
@@ -58,7 +50,7 @@ export const Nav = () => {
   };
 
   const fetchUserDetails = async () => {
-    if (auth) {
+    if (cookieExists) {
       try {
         const res = await axios.get("http://localhost:3000/users/validate", {
           withCredentials: true,
@@ -69,15 +61,15 @@ export const Nav = () => {
         console.log(err);
       }
     } else {
+      setUserDetails({});
       console.log("Cannot fetch user details");
     }
   };
 
   useEffect(() => {
-    setLog(ShowAuth);
     fetchAdminStatus();
     fetchUserDetails();
-  }, [auth]);
+  }, [cookieExists]);
 
   return (
     <header className="Nav">
@@ -97,7 +89,25 @@ export const Nav = () => {
             <span>Admin</span>
           </Link>
         )}
-        {log}
+        {!cookieExists ? (
+          <>
+            <Link to="/login" className="nav-link" aria-label="Login">
+              Login
+            </Link>
+            <Link to="/register" className="nav-link" aria-label="Register">
+              Register
+            </Link>
+          </>
+        ) : (
+          <button
+            onClick={onLogout}
+            className="logout-button"
+            disabled={isLoggingOut}
+            aria-label={isLoggingOut ? "Logging out..." : "Logout"}
+          >
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
+        )}
       </div>
     </header>
   );

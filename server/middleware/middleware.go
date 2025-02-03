@@ -2,16 +2,15 @@ package middleware
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"runtime/debug"
 	"time"
 
 	"github.com/HarshThakur1509/scrunchy-go/initializers"
 	"github.com/HarshThakur1509/scrunchy-go/models"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/markbates/goth/gothic"
 )
 
 type wrappedWrite struct {
@@ -55,55 +54,43 @@ func RecoveryMiddleware(next http.Handler) http.HandlerFunc {
 
 func RequireAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		SECRET := os.Getenv("SECRET")
-		// Retrieve the Authorization cookie
-		cookie, err := r.Cookie("jwt")
+		// Retrieve user ID from the session
+		userID, err := gothic.GetFromSession("user_id", r)
+		if err != nil || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Refresh the session's lifetime
+		session, _ := gothic.Store.Get(r, gothic.SessionName)
+		session.Options.MaxAge += 86400 // Extend by 1 day (adjust as needed)
+		err = session.Save(r, w)
 		if err != nil {
-			http.Error(w, "Unauthorized - missing token", http.StatusUnauthorized)
-			return
-		}
-		tokenString := cookie.Value
-
-		// Parse the JWT token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(SECRET), nil
-		})
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
-			if float64(time.Now().Unix()) > claims["exp"].(float64) {
-				http.Error(w, "Unauthorized - token expired", http.StatusUnauthorized)
-				return
-			}
-			var user models.User
-			initializers.DB.First(&user, claims["sub"])
-
-			if user.ID == 0 {
-				http.Error(w, "Unauthorized - user not found", http.StatusUnauthorized)
-				return
-			}
-			ctx := context.WithValue(r.Context(), "user", user)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
-			http.Error(w, "Unauthorized - token expired", http.StatusUnauthorized)
+			http.Error(w, "Failed to refresh session", http.StatusInternalServerError)
 			return
 		}
 
+		// Attach user ID to the request context
+		ctx := context.WithValue(r.Context(), "userID", userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
 func RequireAdmin(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// Access user information from context (set by RequireAuth)
-		user, ok := r.Context().Value("user").(models.User)
-		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		// Retrieve user ID from the session
+		userID, err := gothic.GetFromSession("user_id", r)
+		if err != nil || userID == "" {
+			// Return an empty JSON response
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 			return
 		}
+
+		var user models.User
+		initializers.DB.Select("admin").First(&user, userID)
 
 		// Check for admin status
 		if !user.Admin {

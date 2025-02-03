@@ -3,25 +3,35 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/HarshThakur1509/scrunchy-go/initializers"
 	"github.com/HarshThakur1509/scrunchy-go/models"
+	"github.com/markbates/goth/gothic"
 	"gorm.io/gorm"
 )
 
 func ListCart(w http.ResponseWriter, r *http.Request) {
-	// Get user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 		return
 	}
 
+	id, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+	uid := uint(id)
+
 	// Ensure the cart exists
 	var cart models.Cart
-	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: user.ID})
+	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: uid})
 
 	// Fetch and return the cart items
 	// var cartItems []models.CartItem
@@ -38,20 +48,29 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 
 	productidStr := r.PathValue("id")
 	productid, _ := strconv.ParseUint(productidStr, 10, 64)
-	// Get user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 		return
 	}
 
+	id, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+	uid := uint(id)
+
 	// Ensure the cart exists
 	var cart models.Cart
-	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: user.ID})
+	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: uid})
 
 	// Check if the product already exists in the cart
 	var cartItem models.CartItem
-	err := initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).First(&cartItem).Error
+	err = initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).First(&cartItem).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -92,15 +111,23 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	productidStr := r.PathValue("id")
 	productid, _ := strconv.ParseUint(productidStr, 10, 64)
 
-	// Get user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 		return
 	}
 
+	id, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+	uid := uint(id)
+
 	var cart models.Cart
-	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
+	initializers.DB.First(&cart, models.Cart{UserID: uid})
 
 	var cartItem models.CartItem
 	initializers.DB.Find(&cartItem, "product_id = ? AND cart_id = ?", uint(productid), cart.ID)
@@ -125,15 +152,24 @@ func QuantityCart(w http.ResponseWriter, r *http.Request) {
 	}
 	productidStr := r.PathValue("id")
 	productid, _ := strconv.ParseUint(productidStr, 10, 64)
-	// Get user from the context
-	user, ok := r.Context().Value("user").(models.User)
-	if !ok {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
 		return
 	}
 
+	id, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+	uid := uint(id)
+
 	var cart models.Cart
-	initializers.DB.First(&cart, models.Cart{UserID: user.ID})
+	initializers.DB.First(&cart, models.Cart{UserID: uid})
 
 	// Decode the request body
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

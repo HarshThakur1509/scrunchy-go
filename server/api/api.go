@@ -6,6 +6,7 @@ import (
 
 	"github.com/HarshThakur1509/scrunchy-go/controllers"
 	"github.com/HarshThakur1509/scrunchy-go/middleware"
+	"github.com/markbates/goth/gothic"
 	"github.com/rs/cors"
 )
 
@@ -20,20 +21,24 @@ func NewApiServer(addr string) *ApiServer {
 func (s *ApiServer) Run() error {
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /health", controllers.Health)
-
 	router.HandleFunc("GET /products", controllers.GetProducts)
 	router.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 	router.HandleFunc("GET /products/{id}", controllers.GetProductIndex)
 
 	router.HandleFunc("POST /users/signup", controllers.SignUp)
 	router.HandleFunc("POST /users/login", controllers.Login)
-	router.HandleFunc("GET /users/logout", controllers.Logout)
+
+	router.HandleFunc("GET /auth", gothic.BeginAuthHandler)
+	router.HandleFunc("GET /auth/callback", controllers.GoogleCallbackHandler)
 
 	router.HandleFunc("POST /users/forgot", controllers.ForgotPasswordHandler)
 	router.HandleFunc("POST /users/reset", controllers.ResetPasswordHandler)
 
+	router.HandleFunc("GET /cookie", controllers.GetCookie)
+
 	authRouter := http.NewServeMux()
+
+	authRouter.HandleFunc("GET /auth/logout", controllers.GothLogout)
 	authRouter.HandleFunc("GET /users/validate", controllers.Validate)
 
 	authRouter.HandleFunc("GET /cart", controllers.ListCart)
