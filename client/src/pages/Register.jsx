@@ -2,27 +2,45 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import useCheckCookie from "../components/useCheckCookie";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
+import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import axios from "axios";
 
 export const Register = () => {
   const { cookieExists } = useCheckCookie();
+
+  const schema = yup.object().shape({
+    name: yup.string().required("Name required"),
+    email: yup.string().email("Invalid email").required("Email required"),
+    password: yup.string().min(4).max(20).required("Password is required"),
+    phone: yup.string().required("Phone required"),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
+
   const onSubmit = async (formdata) => {
-    const name = formdata.name;
-    const phone = formdata.phone;
-    const email = formdata.email;
-    const password = formdata.password;
+    console.log("submitting");
 
     try {
       await axios.post(
         "https://scrunchy.harshthakur.site/api/users/signup",
-        { email, password, name, phone },
-        { withCredentials: true }
+        formdata,
+        {
+          withCredentials: true,
+        }
       );
       await axios.post(
         "https://scrunchy.harshthakur.site/api/users/login",
-        { email, password },
-        { withCredentials: true }
+        formdata,
+        {
+          withCredentials: true,
+        }
       );
       window.location.reload();
     } catch (err) {
@@ -30,43 +48,89 @@ export const Register = () => {
     }
   };
 
-  const schema = yup.object().shape({
-    email: yup.string().required("email required"),
-    password: yup.string().min(4).max(20).required(),
-    name: yup.string().required("Name required"),
-    phone: yup.string().required("Phone required"),
-  });
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-  });
-
   if (cookieExists) return <Navigate to="/" />;
 
   return (
-    <div className="Register">
-      <h1>Register</h1>
-      <form className="Form" onSubmit={handleSubmit(onSubmit)}>
-        <input type="text" placeholder="Name..." {...register("name")} />
-        <p>{errors.name?.message}</p>
-        <input type="text" placeholder="phone..." {...register("phone")} />
-        <p>{errors.phone?.message}</p>
-        <input type="text" placeholder="email..." {...register("email")} />
-        <p>{errors.email?.message}</p>
-        <input
-          type="password"
-          placeholder="Password..."
-          {...register("password")}
-        />
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">Create Account</h1>
+        <p className="auth-subtitle">Get started with us today</p>
 
-        <button className="btn3" type="submit">
-          Submit
-        </button>
-      </form>
+        <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+          <div className="input-group">
+            <label className="input-label">
+              <FaUser className="input-icon" />
+              <input
+                type="text"
+                placeholder="Full name"
+                {...register("name")}
+                className={`input-field ${errors.name ? "input-error" : ""}`}
+              />
+            </label>
+            {errors.name && (
+              <p className="error-message">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">
+              <FaUser className="input-icon" />
+              <input
+                type="text"
+                placeholder="Phone Number"
+                {...register("phone")}
+                className={`input-field ${errors.phone ? "input-error" : ""}`}
+              />
+            </label>
+            {errors.phone && (
+              <p className="error-message">{errors.phone.message}</p>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">
+              <FaEnvelope className="input-icon" />
+              <input
+                type="email"
+                placeholder="Email address"
+                {...register("email")}
+                className={`input-field ${errors.email ? "input-error" : ""}`}
+              />
+            </label>
+            {errors.email && (
+              <p className="error-message">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">
+              <FaLock className="input-icon" />
+              <input
+                type="password"
+                placeholder="Password"
+                {...register("password")}
+                className={`input-field ${
+                  errors.password ? "input-error" : ""
+                }`}
+              />
+            </label>
+            {errors.password && (
+              <p className="error-message">{errors.password.message}</p>
+            )}
+          </div>
+
+          <button className="auth-button" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating account..." : "Sign Up"}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          Already have an account?{" "}
+          <Link to="/login" className="auth-link">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

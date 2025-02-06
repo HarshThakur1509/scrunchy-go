@@ -10,6 +10,7 @@ import (
 	"github.com/HarshThakur1509/scrunchy-go/initializers"
 	"github.com/HarshThakur1509/scrunchy-go/models"
 	"github.com/markbates/goth/gothic"
+	"gorm.io/gorm"
 )
 
 func GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +23,45 @@ func GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user exists (including soft-deleted ones)
+	var existingUser models.User
+	err = initializers.DB.Unscoped().Where("email = ?", user.Email).First(&existingUser).Error
+
+	if err == nil {
+		if existingUser.DeletedAt.Valid { // User was soft-deleted, restore instead of creating a new one
+			// initializers.DB.Model(&existingUser).Update("deleted_at", gorm.DeletedAt{})
+
+			// Set DeletedAt to the zero value (NULL)
+			existingUser.DeletedAt = gorm.DeletedAt{}
+
+			// Save the change (use Unscoped to bypass soft-delete logic)
+			result := initializers.DB.Unscoped().Save(&existingUser)
+			if result.Error != nil {
+				http.Error(w, "Failed to update deleted user", http.StatusBadRequest)
+				return
+
+			}
+
+			// Save user ID in the session
+			var id string = strconv.FormatUint(uint64(existingUser.ID), 10)
+			err = gothic.StoreInSession("user_id", id, r, w)
+			if err != nil {
+				http.Error(w, "Failed to save session", http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+
+			// Redirect to the secure area
+			redirectSecure := os.Getenv("REDIRECT_SECURE")
+			if redirectSecure == "" {
+				redirectSecure = "https://scrunchy.harshthakur.site/"
+			}
+
+			http.Redirect(w, r, redirectSecure, http.StatusFound)
+			return
+		}
+	}
+
 	// Save user to the database
 	userModel := models.User{
 		Name:  user.Name,
@@ -31,6 +71,26 @@ func GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	result := initializers.DB.FirstOrCreate(&userModel, "email = ?", userModel.Email)
 	if result.Error != nil {
 		http.Error(w, "Failed to Create User", http.StatusBadRequest)
+		return
+
+	}
+
+	address := models.Address{
+		UserID: userModel.ID,
+	}
+	result = initializers.DB.FirstOrCreate(&address, "user_id = ?", userModel.ID)
+	if result.Error != nil {
+		http.Error(w, "Failed to Create Address", http.StatusBadRequest)
+		return
+
+	}
+
+	cart := models.Cart{
+		UserID: userModel.ID,
+	}
+	result = initializers.DB.FirstOrCreate(&cart, "user_id = ?", userModel.ID)
+	if result.Error != nil {
+		http.Error(w, "Failed to Create Cart", http.StatusBadRequest)
 		return
 
 	}

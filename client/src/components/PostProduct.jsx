@@ -49,37 +49,59 @@ export const PostProduct = () => {
   };
 
   return (
-    <div>
-      <h1>Upload Form</h1>
-      <form onSubmit={formik.handleSubmit}>
-        <div>
-          <label>Name</label>
-          <input
-            type="text"
-            name="name"
-            onChange={formik.handleChange}
-            value={formik.values.name}
-          />
-          {formik.errors.name && <div>{formik.errors.name}</div>}
-        </div>
-        <div>
-          <label>Price</label>
-          <input
-            type="number"
-            name="price"
-            onChange={formik.handleChange}
-            value={formik.values.price}
-          />
-          {formik.errors.price && <div>{formik.errors.price}</div>}
-        </div>
-        <div>
-          <label>Image</label>
-          <input type="file" name="image" onChange={handleFileChange} />
-          {formik.errors.image && <div>{formik.errors.image}</div>}
-        </div>
-        <button type="submit">Submit</button>
-      </form>
-      {message && <div>{message}</div>}
+    <div className="admin-container">
+      <div className="admin-card">
+        <h1 className="admin-title">Upload New Product</h1>
+
+        <form className="admin-form" onSubmit={formik.handleSubmit}>
+          <div className="input-group">
+            <label className="input-label">Product Name</label>
+            <input
+              type="text"
+              name="name"
+              className="input-field"
+              onChange={formik.handleChange}
+              value={formik.values.name}
+            />
+            {formik.errors.name && (
+              <div className="error-message">{formik.errors.name}</div>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Price</label>
+            <input
+              type="number"
+              name="price"
+              className="input-field"
+              onChange={formik.handleChange}
+              value={formik.values.price}
+            />
+            {formik.errors.price && (
+              <div className="error-message">{formik.errors.price}</div>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Product Image</label>
+            <input
+              type="file"
+              name="image"
+              className="input-field file-input"
+              onChange={handleFileChange}
+            />
+            {formik.errors.image && (
+              <div className="error-message">{formik.errors.image}</div>
+            )}
+          </div>
+
+          <button type="submit" className="admin-button">
+            Upload Product
+          </button>
+        </form>
+
+        {message && <div className="status-message">{message}</div>}
+      </div>
     </div>
   );
 };

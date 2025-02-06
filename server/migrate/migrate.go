@@ -13,6 +13,7 @@ func init() {
 
 func main() {
 	User := &models.User{}
+	Address := &models.Address{}
 	Product := &models.Product{}
 	CartItem := &models.CartItem{}
 	Cart := &models.Cart{}
@@ -22,5 +23,5 @@ func main() {
 		os.Mkdir("uploads", os.ModePerm)
 	}
 
-	initializers.DB.AutoMigrate(User, Product, CartItem, Cart)
+	initializers.DB.AutoMigrate(User, Address, Product, CartItem, Cart)
 }

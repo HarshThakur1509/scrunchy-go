@@ -3,8 +3,8 @@ module github.com/HarshThakur1509/scrunchy-go
 go 1.23.5
 
 require (
-	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/sessions v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/markbates/goth v1.80.0
 	github.com/razorpay/razorpay-go v1.3.2
 	github.com/rs/cors v1.11.1

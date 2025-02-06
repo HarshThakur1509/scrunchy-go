@@ -15,6 +15,8 @@ export const AdminStatus = () => {
         withCredentials: true,
       }
     );
+    console.log(response.data);
+
     return response.data;
   };
 

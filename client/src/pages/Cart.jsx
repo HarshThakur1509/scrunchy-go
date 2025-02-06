@@ -36,17 +36,15 @@ export const Cart = () => {
   // };
 
   return (
-    <section className="Cart">
+    <section className="cart-container">
       <div className="container">
-        <h2>Your Cart</h2>
+        <h2 className="cart-title">Your Cart</h2>
         <CartItems cartItems={cart.CartItems} />
         <div className="cart-total">
-          <h4>Total: Rs. {cart.Total}</h4>
-          <button className="btn btn-primary">
-            <Link to="/checkout" state={{ cart }}>
-              Checkout
-            </Link>
-          </button>
+          <h4 className="total-text">Total: Rs. {cart.Total}</h4>
+          <Link to="/checkout" state={{ cart }} className="checkout-btn">
+            Proceed to Checkout
+          </Link>
         </div>
       </div>
     </section>

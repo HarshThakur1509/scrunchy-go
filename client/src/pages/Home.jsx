@@ -4,17 +4,25 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 
 export const Home = () => {
-  // Fetch products
-  const fetchProducts = () => {
-    return fetch("https://scrunchy.harshthakur.site/api/products", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    }).then((res) => res.json());
-  };
-
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: products,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["products"],
-    queryFn: fetchProducts,
+    queryFn: async () => {
+      const res = await axios.get(
+        `https://scrunchy.harshthakur.site/api/products`,
+        {
+          withCredentials: true,
+        }
+      );
+      return res.data;
+    },
+    staleTime: 60 * 1000, // Cache for 1 minute
+    refetchOnWindowFocus: true,
+    retry: 1,
   });
 
   // Mutation for adding to cart
@@ -34,19 +42,15 @@ export const Home = () => {
     addToCartMutation.mutate(id);
   };
 
-  if (isLoading) {
-    return <p>Loading...</p>;
-  }
-  if (isError) {
-    return <p>Error!</p>;
-  }
+  if (isLoading) return <p>Loading videos...</p>;
+  if (isError) return <p>Error loading videos: {error.message}</p>;
 
   return (
     <section className="product-section">
       <div className="container">
         <h2>Featured Products</h2>
         <div className="row">
-          {data.map((product) => (
+          {products.map((product) => (
             <div className="card" key={product.ID}>
               <img
                 className="card-img-top"
@@ -56,7 +60,10 @@ export const Home = () => {
               <div className="card-body">
                 <h5 className="card-title pro-name">{product.Name}</h5>
                 <p className="card-text pro-price">Rs. {product.Price}</p>
-                <button onClick={() => handleAddToCart(product.ID)}>
+                <button
+                  className="add-to-cart-btn"
+                  onClick={() => handleAddToCart(product.ID)}
+                >
                   <FontAwesomeIcon icon={faPlus} />
                 </button>
               </div>

@@ -35,50 +35,45 @@ export const CartItems = ({ cartItems }) => {
 
   return (
     <div className="cart-items">
-      {sortedCartItems.map((cartItem) => {
-        return (
-          <div className="cart-item" key={cartItem.ID}>
-            <div className="item-details">
-              <img
-                className="card-img-top"
-                src={`https://scrunchy.harshthakur.site/api/${cartItem.Product.Image}`}
-                alt={cartItem.Product.Name}
-              />
-              <div className="item-info">
-                <h5 className="pro-name">{cartItem.Product.Name}</h5>
-                <p className="pro-price">
-                  Rs.{cartItem.Quantity * cartItem.Product.Price}
-                </p>
-              </div>
-            </div>
-            <div className="quantity ml-auto">
-              <button
-                className="quantity-btn minus"
-                onClick={() =>
-                  handleMinus(cartItem.Product.ID, cartItem.Quantity)
-                }
-              >
-                <FontAwesomeIcon icon={faMinus} />
-              </button>
-              <input
-                type="number"
-                className="quantity-input"
-                value={cartItem.Quantity}
-                min="1"
-                readOnly
-              />
-              <button
-                className="quantity-btn plus"
-                onClick={() =>
-                  handleAdd(cartItem.Product.ID, cartItem.Quantity)
-                }
-              >
-                <FontAwesomeIcon icon={faPlus} />
-              </button>
+      {sortedCartItems.map((cartItem) => (
+        <div className="cart-item" key={cartItem.ID}>
+          <div className="item-details">
+            <img
+              src={`https://scrunchy.harshthakur.site/api/${cartItem.Product.Image}`}
+              alt={cartItem.Product.Name}
+            />
+            <div className="item-info">
+              <h5 className="pro-name">{cartItem.Product.Name}</h5>
+              <p className="pro-price">
+                Rs.{cartItem.Quantity * cartItem.Product.Price}
+              </p>
             </div>
           </div>
-        );
-      })}
+          <div className="quantity-controls">
+            <button
+              className="quantity-btn minus"
+              onClick={() =>
+                handleMinus(cartItem.Product.ID, cartItem.Quantity)
+              }
+            >
+              <FontAwesomeIcon icon={faMinus} />
+            </button>
+            <input
+              type="number"
+              className="quantity-input"
+              value={cartItem.Quantity}
+              min="1"
+              readOnly
+            />
+            <button
+              className="quantity-btn plus"
+              onClick={() => handleAdd(cartItem.Product.ID, cartItem.Quantity)}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

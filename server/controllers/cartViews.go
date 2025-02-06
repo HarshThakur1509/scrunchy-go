@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,7 +9,6 @@ import (
 	"github.com/HarshThakur1509/scrunchy-go/initializers"
 	"github.com/HarshThakur1509/scrunchy-go/models"
 	"github.com/markbates/goth/gothic"
-	"gorm.io/gorm"
 )
 
 func ListCart(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +45,11 @@ func ListCart(w http.ResponseWriter, r *http.Request) {
 func AddToCart(w http.ResponseWriter, r *http.Request) {
 
 	productidStr := r.PathValue("id")
-	productid, _ := strconv.ParseUint(productidStr, 10, 64)
+	productid, err := strconv.ParseUint(productidStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
 
 	userID, err := gothic.GetFromSession("user_id", r)
 	if err != nil || userID == "" {
@@ -58,9 +60,10 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseUint(userID, 10, 32)
+	id, err := strconv.ParseUint(userID, 10, 64)
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "Invalid user ID format", http.StatusInternalServerError)
+		return
 	}
 	uid := uint(id)
 
@@ -69,29 +72,51 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	initializers.DB.FirstOrCreate(&cart, models.Cart{UserID: uid})
 
 	// Check if the product already exists in the cart
+	// var cartItem models.CartItem
+	// err = initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).First(&cartItem).Error
+
+	// if err != nil {
+	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 		// Product not in cart, create a new cart item
+	// 		cartItem = models.CartItem{
+	// 			ProductID: uint(productid),
+	// 			CartID:    cart.ID,
+	// 		}
+	// 		initializers.DB.Create(&cartItem)
+
+	// 	} else {
+	// 		// Handle other errors
+	// 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// } else {
+	// 	// Product already in cart, update quantity
+	// 	cartItem.Quantity++
+	// 	initializers.DB.Save(&cartItem)
+
+	// }
+
 	var cartItem models.CartItem
-	err = initializers.DB.Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).First(&cartItem).Error
+	result := initializers.DB.
+		Where("cart_id = ? AND product_id = ?", cart.ID, uint(productid)).
+		FirstOrCreate(&cartItem, models.CartItem{
+			ProductID: uint(productid),
+			CartID:    cart.ID,
+		})
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Product not in cart, create a new cart item
-			cartItem = models.CartItem{
-				Quantity:  1,
-				ProductID: uint(productid),
-				CartID:    cart.ID,
-			}
-			initializers.DB.Create(&cartItem)
+	if result.Error != nil {
+		// Handle database errors
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-		} else {
-			// Handle other errors
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// If the item already exists, increment the quantity
+	if result.RowsAffected == 0 {
+		cartItem.Quantity++
+		if err := initializers.DB.Save(&cartItem).Error; err != nil {
+			http.Error(w, "Failed to update cart item", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		// Product already in cart, update quantity
-		cartItem.Quantity++
-		initializers.DB.Save(&cartItem)
-
 	}
 
 	// Reload the cart with updated items and preload CartItems and Product
@@ -120,7 +145,7 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseUint(userID, 10, 32)
+	id, err := strconv.ParseUint(userID, 10, 64)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -134,7 +159,7 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 
 	initializers.DB.Preload("Product").First(&cartItem, "cart_id = ?", cart.ID)
 	cart.Total -= cartItem.Product.Price * cartItem.Quantity
-	initializers.DB.Delete(&cartItem)
+	initializers.DB.Unscoped().Delete(&cartItem)
 	initializers.DB.Save(&cart)
 
 	initializers.DB.Preload("CartItems.Product").First(&cart, cart.ID)
@@ -184,7 +209,7 @@ func QuantityCart(w http.ResponseWriter, r *http.Request) {
 
 	if body.Quantity == 0 {
 		cart.Total -= cartItem.Product.Price * cartItem.Quantity
-		initializers.DB.Delete(&cartItem)
+		initializers.DB.Unscoped().Delete(&cartItem)
 		initializers.DB.Save(&cart)
 	} else {
 		cart.Total += cartItem.Product.Price * (body.Quantity - cartItem.Quantity)

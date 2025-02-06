@@ -12,6 +12,7 @@ import (
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +28,41 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to Read Body", http.StatusBadRequest)
 		return
 	}
+
+	// Check if user exists (including soft-deleted ones)
+	var existingUser models.User
+	err = initializers.DB.Unscoped().Where("email = ?", body.Email).First(&existingUser).Error
+
+	if err == nil {
+		if existingUser.DeletedAt.Valid { // User was soft-deleted, restore instead of creating a new one
+			// initializers.DB.Model(&existingUser).Update("deleted_at", nil)
+
+			// Set DeletedAt to the zero value (NULL)
+			existingUser.DeletedAt = gorm.DeletedAt{}
+
+			// Save the change (use Unscoped to bypass soft-delete logic)
+			result := initializers.DB.Unscoped().Save(&existingUser)
+			if result.Error != nil {
+				http.Error(w, "Failed to update deleted user", http.StatusBadRequest)
+				return
+
+			}
+
+			// Hash the password
+			hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+			if err != nil {
+				http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+				return
+			}
+			existingUser.Password = string(hash)
+			initializers.DB.Save(&existingUser)
+
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"message": "User restored successfully"})
+			return
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 
 	if err != nil {
@@ -36,15 +72,27 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 	user := models.User{Email: body.Email, Password: string(hash), Name: body.Name, Phone: body.Phone}
 
-	result := initializers.DB.Create(&user)
+	result := initializers.DB.FirstOrCreate(&user, "email = ?", body.Email)
 	if result.Error != nil {
 		http.Error(w, "Failed to Create User", http.StatusBadRequest)
 		return
 
 	}
 
-	cart := models.Cart{UserID: user.ID}
-	result = initializers.DB.Create(&cart)
+	address := models.Address{
+		UserID: user.ID,
+	}
+	result = initializers.DB.FirstOrCreate(&address, "user_id = ?", user.ID)
+	if result.Error != nil {
+		http.Error(w, "Failed to Create Address", http.StatusBadRequest)
+		return
+
+	}
+
+	cart := models.Cart{
+		UserID: user.ID,
+	}
+	result = initializers.DB.FirstOrCreate(&cart, "user_id = ?", user.ID)
 	if result.Error != nil {
 		http.Error(w, "Failed to Create Cart", http.StatusBadRequest)
 		return
@@ -109,7 +157,7 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	initializers.DB.Preload("Cart").Omit("password").First(&user, userID)
+	initializers.DB.Preload(clause.Associations).First(&user, userID)
 	// Respond with the user information as JSON
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.Marshal(user)
@@ -257,7 +305,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
 
 	// Use Preload to load the associated Cart for each User
-	initializers.DB.Preload("Cart").Find(&users)
+	initializers.DB.Preload(clause.Associations).Omit("Password", "ResetToken", "TokenExpiry").Find(&users)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -274,4 +322,51 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{"message": "User deleted"})
+}
+
+func UpdateAddress(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		City     string
+		Location string
+		State    string
+		ZipCode  string
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, "Failed to Read Body", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve user ID from the session
+	userID, err := gothic.GetFromSession("user_id", r)
+	if err != nil || userID == "" {
+		// Return an empty JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]interface{}{"exists": false})
+		return
+	}
+
+	// 3. Find or create address
+	var address models.Address
+	result := initializers.DB.Where("user_id = ?", userID).First(&address)
+	if result.Error != nil {
+		http.Error(w, "Failed to get address", http.StatusBadRequest)
+		return
+
+	}
+
+	address.City = body.City
+	address.Location = body.Location
+	address.State = body.State
+	address.ZipCode = body.ZipCode
+
+	if err := initializers.DB.Save(&address).Error; err != nil {
+		http.Error(w, "Failed to save address", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
